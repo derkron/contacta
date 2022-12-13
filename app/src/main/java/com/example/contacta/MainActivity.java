@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.RadioButton;
@@ -12,10 +13,14 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +29,9 @@ public class MainActivity extends AppCompatActivity {
     EditText jetcodigo,jetusuario,jetfacebook,jetlinkedin,jettwitter;
     CheckBox jcbred;
     Switch jswfacebook,jswtwitter,jswlinkedin;
-    String codigo,usuario,usuarioface,usuariotwi,usuariolink,redes;
+    boolean respuesta;
+    String codigo,usuario,usuarioface,usuariotwi,usuariolink,redes,ident_doc;
+    Button jbtnCancelar;
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -50,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
         jetfacebook.setEnabled(false);
         jettwitter.setEnabled(false);
         jetlinkedin.setEnabled(false);
+        jbtnCancelar=findViewById(R.id.btnCancelar);
 
 
     }
@@ -74,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
             red.put("usuario facebook", usuarioface);
             red.put("usuario twitter", usuariotwi);
             red.put("usuario linkedin", usuariolink);
-            red.put("disponible", "si");
+            red.put("disponible","si");
 
 
 
@@ -86,6 +94,8 @@ public class MainActivity extends AppCompatActivity {
                         public void onSuccess(DocumentReference documentReference) {
                             //Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
                             Toast.makeText(MainActivity.this, "Elementos agregados con exito", Toast.LENGTH_SHORT).show();
+                            Limpiar_campos();
+
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -99,6 +109,47 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+   public void Consultar (View view) {
+       respuesta = false;
+       codigo = jetcodigo.getText().toString();
+       if (codigo.isEmpty()) {
+           Toast.makeText(this, "codigo es requerido", Toast.LENGTH_SHORT).show();
+           jetcodigo.requestFocus();
+       } else {
+           db.collection("contacta")
+                   .whereEqualTo("codigo", codigo)
+                   .get()
+                   .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                       @Override
+                       public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                           if (task.isSuccessful()) {
+
+                               for (QueryDocumentSnapshot document : task.getResult()) {
+                                   respuesta = true;
+                                   ident_doc = document.getId();
+                                   jetusuario.setText(document.getString("usuario"));
+
+
+
+                                   if (document.getString("disponible").equals("si")) {
+                                       jcbred.setChecked(true);
+                                       jswfacebook.setChecked(true);
+                                       jswtwitter.setChecked(true);
+                                       jswlinkedin.setChecked(true);
+                                       jetfacebook.setText(document.getString("usuario facebook"));
+                                       jettwitter.setText(document.getString("usuario twitter"));
+                                       jetlinkedin.setText(document.getString("usuario linkedin"));
+                                   } else
+                                       jcbred.setChecked(false);
+                                   //Log.d(TAG, document.getId() + " => " + document.getData());
+                               }
+                           } else {
+                               //Log.w(TAG, "Error getting documents.", task.getException());
+                           }
+                       }
+                   });
+       }
+   }
 
     public void Disponible (View view){
         if (jcbred.isChecked()){
@@ -109,17 +160,59 @@ public class MainActivity extends AppCompatActivity {
                 jetfacebook.setEnabled(true);
                 redes="FACEBOOK, ";
             }
+            else{
+                jetfacebook.setEnabled(false);
+                jetfacebook.setText("");
+            }
             if (jswtwitter.isChecked()){
                 jettwitter.setEnabled(true);
                 redes+=" TWITTER,  ";
+            }
+            else{
+                jettwitter.setEnabled(false);
+                jettwitter.setText("");
             }
             if (jswlinkedin.isChecked()){
                 jetlinkedin.setEnabled(true);
                 redes+=" LINKEDIN";
             }
-
-
+            else{
+                jetlinkedin.setEnabled(false);
+                jetlinkedin.setText("");
+            }
         }
-    }
+        else{
+            jswfacebook.setEnabled(false);
+            jswtwitter.setEnabled(false);
+            jswlinkedin.setEnabled(false);
+            jswlinkedin.setChecked(false);
+            jswtwitter.setChecked(false);
+            jswfacebook.setChecked(false);
+            jetlinkedin.setEnabled(false);
+            jettwitter.setEnabled(false);
+            jetfacebook.setEnabled(false);
+        }
 
+    }
+    public void  Cancelar(View view){
+        Limpiar_campos();
+    }
+    private void Limpiar_campos() {
+        jetcodigo.setText("");
+        jetusuario.setText("");
+        jcbred.setChecked(false);
+        jetlinkedin.setText("");
+        jettwitter.setText("");
+        jetfacebook.setText("");
+        jswfacebook.setEnabled(false);
+        jswtwitter.setEnabled(false);
+        jswlinkedin.setEnabled(false);
+        jetfacebook.setEnabled(false);
+        jettwitter.setEnabled(false);
+        jetlinkedin.setEnabled(false);
+        jetcodigo.requestFocus();
+
+        respuesta=false;
+    }
 }
+
