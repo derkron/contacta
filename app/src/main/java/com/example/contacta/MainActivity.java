@@ -194,6 +194,49 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+    public void Anular(View View){
+        codigo=jetcodigo.getText().toString();
+        usuario=jetusuario.getText().toString();
+        if  (codigo.isEmpty() || usuario.isEmpty()){
+            Toast.makeText(this, "Los campos son necesarios", Toast.LENGTH_SHORT).show();
+            jetcodigo.requestFocus();
+        }
+        else{
+            if(respuesta==true){
+
+                // Create a new user with a first and last name
+                Map<String, Object> red = new HashMap<>();
+                red.put("codigo", codigo);
+                red.put("usuario", usuario);
+                red.put("redes", redes);
+                red.put("usuario facebook", usuarioface);
+                red.put("usuario twitter", usuariotwi);
+                red.put("usuario linkedin", usuariolink);
+                red.put("disponible","no");
+
+                // Modify a new document with a generated ID
+                db.collection("contacta").document(ident_doc)
+                        .set(red)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Toast.makeText(MainActivity.this, "Documento anulado ...", Toast.LENGTH_SHORT).show();
+                                Limpiar_campos();
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(MainActivity.this, "Error anulando documento...", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            }
+            else{
+                Toast.makeText(this, "Debe primero consultar", Toast.LENGTH_SHORT).show();
+                jetcodigo.requestFocus();
+            }
+        }
+    }
     public void  Cancelar(View view){
         Limpiar_campos();
     }
